@@ -10,6 +10,8 @@ use App\Models\Persona;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class clienteController extends Controller
 {
@@ -23,7 +25,7 @@ class clienteController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): View
     {
         $clientes = Cliente::with('persona.documento')->get();
         return view('cliente.index', compact('clientes'));
@@ -32,7 +34,7 @@ class clienteController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): View
     {
         $documentos = Documento::all();
         return view('cliente.create', compact('documentos'));
@@ -41,7 +43,7 @@ class clienteController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StorePersonaRequest $request)
+    public function store(StorePersonaRequest $request): RedirectResponse
     {
         try {
             DB::beginTransaction();
@@ -68,7 +70,7 @@ class clienteController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Cliente $cliente)
+    public function edit(Cliente $cliente): View
     {
         $cliente->load('persona.documento');
         $documentos = Documento::all();
@@ -78,7 +80,7 @@ class clienteController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateClienteRequest $request, Cliente $cliente)
+    public function update(UpdateClienteRequest $request, Cliente $cliente): RedirectResponse
     {
         try {
             DB::beginTransaction();
@@ -97,7 +99,7 @@ class clienteController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): RedirectResponse
     {
         $message = '';
         $persona = Persona::find($id);

@@ -28,22 +28,21 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/',[homeController::class,'index'])->name('panel');
 
-Route::resources([
-    'categorias' => categoriaController::class,
-    'presentaciones' => presentacioneController::class,
-    'marcas' => marcaController::class,
-    'productos' => ProductoController::class,
-    'clientes' => clienteController::class,
-    'proveedores' => proveedorController::class,
-    'compras' => compraController::class,
-    'ventas' => ventaController::class,
-    'users' => userController::class,
-    'roles' => roleController::class,
-    'profile' => profileController::class
-]);
+Route::resource('categorias', categoriaController::class)->except('show');
+Route::resource('presentaciones', presentacioneController::class)->except('show');
+Route::resource('marcas', marcaController::class)->except('show');
+Route::resource('productos', ProductoController::class)->except('show');
+Route::resource('clientes', clienteController::class)->except('show');
+Route::resource('proveedores', proveedorController::class)->except('show');
+Route::resource('compras', compraController::class)->except('edit','update');
+Route::resource('ventas', ventaController::class)->except('edit','update');
+Route::resource('users', userController::class)->except('show');
+Route::resource('roles', roleController::class)->except('show');
+Route::resource('profile', profileController::class)->only('index','update');
+
 
 Route::get('/login',[loginController::class,'index'])->name('login');
-Route::post('/login',[loginController::class,'login']);
+Route::post('/login',[loginController::class,'login'])->name('login.login');
 Route::get('/logout',[logoutController::class,'logout'])->name('logout');
 
 Route::get('/401', function () {
@@ -54,4 +53,8 @@ Route::get('/404', function () {
 });
 Route::get('/500', function () {
     return view('pages.500');
+});
+
+Route::fallback(function () {
+    return response()->view('pages.404', [], 404);
 });

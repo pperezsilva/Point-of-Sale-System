@@ -11,6 +11,8 @@ use App\Models\Producto;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class ProductoController extends Controller
 {
@@ -24,7 +26,7 @@ class ProductoController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): View
     {
         $productos = Producto::with(['categorias.caracteristica','marca.caracteristica','presentacione.caracteristica'])->latest()->get();
     
@@ -34,7 +36,7 @@ class ProductoController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): View
     {
         $marcas = Marca::join('caracteristicas as c', 'marcas.caracteristica_id', '=', 'c.id')
             ->select('marcas.id as id', 'c.nombre as nombre')
@@ -57,7 +59,7 @@ class ProductoController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreProductoRequest $request)
+    public function store(StoreProductoRequest $request): RedirectResponse
     {
         //dd($request);
         try {
@@ -106,7 +108,7 @@ class ProductoController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Producto $producto)
+    public function edit(Producto $producto): View
     {
         $marcas = Marca::join('caracteristicas as c', 'marcas.caracteristica_id', '=', 'c.id')
             ->select('marcas.id as id', 'c.nombre as nombre')
@@ -129,7 +131,7 @@ class ProductoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateProductoRequest $request, Producto $producto)
+    public function update(UpdateProductoRequest $request, Producto $producto): RedirectResponse
     {
         try{
             DB::beginTransaction();
@@ -173,7 +175,7 @@ class ProductoController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): RedirectResponse
     {
         $message = '';
         $producto = Producto::find($id);

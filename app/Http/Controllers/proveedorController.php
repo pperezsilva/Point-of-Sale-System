@@ -9,6 +9,8 @@ use App\Models\Persona;
 use App\Models\Proveedore;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class proveedorController extends Controller
 {
@@ -22,7 +24,7 @@ class proveedorController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): View
     {
         $proveedores = Proveedore::with('persona.documento')->get();
         return view('proveedore.index',compact('proveedores'));
@@ -31,7 +33,7 @@ class proveedorController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): View
     {
         $documentos = Documento::all();
         return view('proveedore.create',compact('documentos'));
@@ -40,7 +42,7 @@ class proveedorController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StorePersonaRequest $request)
+    public function store(StorePersonaRequest $request): RedirectResponse
     {
         try {
             DB::beginTransaction();
@@ -67,7 +69,7 @@ class proveedorController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Proveedore $proveedore)
+    public function edit(Proveedore $proveedore): View
     {
         $proveedore->load('persona.documento');
         $documentos = Documento::all();
@@ -77,7 +79,7 @@ class proveedorController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateProveedoreRequest $request, Proveedore $proveedore)
+    public function update(UpdateProveedoreRequest $request, Proveedore $proveedore): RedirectResponse
     {
         try{
             DB::beginTransaction();
@@ -96,7 +98,7 @@ class proveedorController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): RedirectResponse
     {
         $message = '';
         $persona = Persona::find($id);

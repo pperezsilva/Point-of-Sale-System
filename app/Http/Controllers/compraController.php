@@ -10,6 +10,8 @@ use App\Models\Proveedore;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class compraController extends Controller
 {
@@ -24,7 +26,7 @@ class compraController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): View
     {
         $compras = Compra::with('comprobante','proveedore.persona')
         ->where('estado',1)
@@ -37,7 +39,7 @@ class compraController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): View
     {
         $proveedores = Proveedore::whereHas('persona',function($query){
             $query->where('estado',1);
@@ -50,7 +52,7 @@ class compraController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCompraRequest $request)
+    public function store(StoreCompraRequest $request): RedirectResponse
     {
         try{
             DB::beginTransaction();
@@ -103,7 +105,7 @@ class compraController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Compra $compra)
+    public function show(Compra $compra): View
     {
         return view('compra.show',compact('compra'));
     }
@@ -127,7 +129,7 @@ class compraController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): RedirectResponse
     {
         Compra::where('id',$id)
         ->update([

@@ -25,6 +25,8 @@
 
         <div id="layoutSidenav_content">
 
+            @include('layouts.partials.alert')
+
             <main>
                 @yield('content')
             </main>
