@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Marca extends Model
 {
     use HasFactory;
+    
+    protected $fillable = ['caracteristica_id'];
 
     public function productos(): HasMany
     {
@@ -21,5 +23,4 @@ class Marca extends Model
         return $this->belongsTo(Caracteristica::class);
     }
 
-    protected $fillable = ['caracteristica_id'];
 }

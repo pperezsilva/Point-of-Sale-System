@@ -9,36 +9,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Producto extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'codigo',
-        'nombre',
-        'descripcion',
-        'fecha_vencimiento',
-        'marca_id',
-        'presentacione_id',
-        'img_path'
-    ];
+    protected $guarded = ['id'];
 
     public function compras(): BelongsToMany
     {
         return $this->belongsToMany(Compra::class)->withTimestamps()
-            ->withPivot('cantidad', 'precio_compra', 'precio_venta');
+            ->withPivot('cantidad', 'precio_compra', 'fecha_vencimiento');
     }
 
     public function ventas(): BelongsToMany
     {
         return $this->belongsToMany(Venta::class)->withTimestamps()
-            ->withPivot('cantidad', 'precio_venta', 'descuento');
+            ->withPivot('cantidad', 'precio_venta');
     }
 
-    public function categorias(): BelongsToMany
+    public function categoria(): BelongsTo
     {
-        return $this->belongsToMany(Categoria::class)->withTimestamps();
+        return $this->belongsTo(Categoria::class);
     }
 
     public function marca(): BelongsTo
@@ -49,6 +43,16 @@ class Producto extends Model
     public function presentacione(): BelongsTo
     {
         return $this->belongsTo(Presentacione::class);
+    }
+
+    public function inventario(): HasOne
+    {
+        return $this->hasOne(Inventario::class);
+    }
+
+    public function kardex(): HasMany
+    {
+        return $this->hasMany(Kardex::class);
     }
 
     //Guarda imagen en el Storage

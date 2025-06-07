@@ -8,17 +8,16 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('compra_producto', function (Blueprint $table) {
+        Schema::create('inventario', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('compra_id')->constrained()->cascadeOnDelete();
             $table->foreignId('producto_id')->constrained()->cascadeOnDelete();
-            $table->integer('cantidad')->unsigned();
-            $table->decimal('precio_compra',10,2,true);
+            $table->foreignId('ubicacione_id')->constrained()->cascadeOnDelete();
+            $table->unsignedInteger('cantidad');
+            $table->unsignedInteger('cantidad_minima')->nullable();
+            $table->unsignedInteger('cantidad_maxima')->nullable();
             $table->date('fecha_vencimiento')->nullable();
             $table->timestamps();
         });
@@ -26,11 +25,9 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
-        Schema::dropIfExists('compra_producto');
+        Schema::dropIfExists('inventario');
     }
 };
