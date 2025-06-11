@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use App\Enums\TipoPersonaEnum;
+use App\Models\ActivityLog;
+use App\Services\ActivityLogService;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class proveedorController extends Controller
 {
@@ -27,7 +31,7 @@ class proveedorController extends Controller
      */
     public function index(): View
     {
-        $proveedores = Proveedore::with('persona.documento')->get();
+        $proveedores = Proveedore::with('persona.documento')->latest()->get();
         return view('proveedore.index',compact('proveedores'));
     }
 
@@ -51,11 +55,19 @@ class proveedorController extends Controller
             $persona = Persona::create($request->validated());
             $persona->proveedore()->create([]);
             DB::commit();
-        } catch (Exception $e) {
+
+            ActivityLogService::log('Creacion de proveedor','Proveedores', $request->validated());
+
+            return redirect()->route('proveedores.index')->with('success', 'Proveedor registrado');
+
+        } catch (Throwable $e) {
             DB::rollBack();
+
+            Log::error('Error al crear un proveedor', ['error' => $e->getMessage()]);
+
+            return redirect()->route('proveedores.index')->with('error', 'Error al registrar el proveedor');
         }
 
-        return redirect()->route('proveedores.index')->with('success', 'Proveedor registrado');
     }
 
     /**
@@ -82,14 +94,15 @@ class proveedorController extends Controller
     public function update(UpdateProveedoreRequest $request, Proveedore $proveedore): RedirectResponse
     {
         try{
-           
             $proveedore->persona->update($request->validated());
+            ActivityLogService::log('Edicion de proveedor', 'Proveedores', $request->validated());
+            return redirect()->route('proveedores.index')->with('success','Proveedor editado');
 
-        }catch(Exception $e){
-            return redirect()->route('proveedores.index')->with('error', 'Error al editar el proveedor: ' . $e->getMessage());
+        }catch(Throwable $e){
+            Log::error('Error al editar un proveedor', ['error' => $e->getMessage()]);
+            return redirect()->route('proveedores.index')->with('error', 'Error al editar el proveedor');
         }
 
-        return redirect()->route('proveedores.index')->with('success','Proveedor editado');
     }
 
     /**
@@ -97,22 +110,22 @@ class proveedorController extends Controller
      */
     public function destroy(string $id): RedirectResponse
     {
-        $message = '';
-        $persona = Persona::find($id);
-        if ($persona->estado == 1) {
-            Persona::where('id', $persona->id)
-                ->update([
-                    'estado' => 0
-                ]);
-            $message = 'Proveedor eliminado';
-        } else {
-            Persona::where('id', $persona->id)
-                ->update([
-                    'estado' => 1
-                ]);
-            $message = 'Proveedor restaurado';
-        }
+        try{
+            $persona = Persona::findOrFail($id);
 
-        return redirect()->route('proveedores.index')->with('success', $message);
+            $nuevoEstado = $persona->estado == 1 ? 0 : 1; 
+            $persona->update(['estado' => $nuevoEstado]);
+            $message = $nuevoEstado == 1 ? 'Proveedor restaurado' : 'Proveedor eliminado';
+
+            ActivityLogService::log($message, 'Proveedores', [
+                'persona_id' => $id,
+                'estado' => $nuevoEstado
+            ]);
+            return redirect()->route('proveedores.index')->with('success', $message);
+
+        }catch(Throwable $e){
+            Log::error('Error al eliminar/restaurar un proveedor', ['error' => $e->getMessage()]);
+            return redirect()->route('proveedores.index')->with('error', 'Algo salió mal');
+        }
     }
 }

@@ -14,6 +14,7 @@ use App\Http\Controllers\proveedorController;
 use App\Http\Controllers\roleController;
 use App\Http\Controllers\userController;
 use App\Http\Controllers\ventaController;
+use App\Http\Controllers\ActivityLogController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -39,7 +40,7 @@ Route::resource('ventas', ventaController::class)->except('edit','update');
 Route::resource('users', userController::class)->except('show');
 Route::resource('roles', roleController::class)->except('show');
 Route::resource('profile', profileController::class)->only('index','update');
-
+Route::resource('activityLog', ActivityLogController::class)->only('index');
 
 Route::get('/login',[loginController::class,'index'])->name('login');
 Route::post('/login',[loginController::class,'login'])->name('login.login');

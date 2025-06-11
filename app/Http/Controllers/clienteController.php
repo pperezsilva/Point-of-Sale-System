@@ -13,6 +13,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Services\ActivityLogService;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class clienteController extends Controller
 {
@@ -28,7 +31,7 @@ class clienteController extends Controller
      */
     public function index(): View
     {
-        $clientes = Cliente::with('persona.documento')->get();
+        $clientes = Cliente::with('persona.documento')->latest()->get();
         return view('cliente.index', compact('clientes'));
     }
 
@@ -52,11 +55,18 @@ class clienteController extends Controller
             $persona = Persona::create($request->validated());
             $persona->cliente()->create([]);
             DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
-        }
 
-        return redirect()->route('clientes.index')->with('success', 'Cliente registrado');
+            ActivityLogService::log('Creacion de cliente','Clientes', $request->validated());
+
+            return redirect()->route('clientes.index')->with('success', 'Cliente registrado');
+
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            Log::error('Error al crear un cliente', ['error' => $e->getMessage()]);
+
+            return redirect()->route('clientes.index')->with('error', 'Error al registrar el cliente');
+        }
     }
 
     /**
@@ -82,15 +92,15 @@ class clienteController extends Controller
      */
     public function update(UpdateClienteRequest $request, Cliente $cliente): RedirectResponse
     {
-        try {
-
+        try{
             $cliente->persona->update($request->validated());
-            
-        } catch (Exception $e) {
-            return redirect()->route('clientes.index')->with('error', 'Error al editar el cliente: ' . $e->getMessage());
-        }
+            ActivityLogService::log('Edicion de cliente', 'Clientes', $request->validated());
+            return redirect()->route('clientes.index')->with('success','Cliente editado');
 
-        return redirect()->route('clientes.index')->with('success', 'Cliente editado');
+        }catch(Throwable $e){
+            Log::error('Error al editar un cliente', ['error' => $e->getMessage()]);
+            return redirect()->route('clientes.index')->with('error', 'Error al editar el cliente');
+        }
     }
 
     /**
@@ -98,22 +108,22 @@ class clienteController extends Controller
      */
     public function destroy(string $id): RedirectResponse
     {
-        $message = '';
-        $persona = Persona::find($id);
-        if ($persona->estado == 1) {
-            Persona::where('id', $persona->id)
-                ->update([
-                    'estado' => 0
-                ]);
-            $message = 'Cliente eliminado';
-        } else {
-            Persona::where('id', $persona->id)
-                ->update([
-                    'estado' => 1
-                ]);
-            $message = 'Cliente restaurado';
-        }
+        try{
+            $persona = Persona::findOrFail($id);
 
-        return redirect()->route('clientes.index')->with('success', $message);
+            $nuevoEstado = $persona->estado == 1 ? 0 : 1; 
+            $persona->update(['estado' => $nuevoEstado]);
+            $message = $nuevoEstado == 1 ? 'Cliente restaurado' : 'Cliente eliminado';
+
+            ActivityLogService::log($message, 'Clientes', [
+                'persona_id' => $id,
+                'estado' => $nuevoEstado
+            ]);
+            return redirect()->route('clientes.index')->with('success', $message);
+
+        }catch(Throwable $e){
+            Log::error('Error al eliminar/restaurar un cliente', ['error' => $e->getMessage()]);
+            return redirect()->route('clientes.index')->with('error', 'Algo salió mal');
+        }
     }
 }
