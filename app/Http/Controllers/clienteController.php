@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TipoPersonaEnum;
 use App\Http\Requests\StorePersonaRequest;
 use App\Http\Requests\UpdateClienteRequest;
 use App\Models\Cliente;
@@ -37,7 +38,8 @@ class clienteController extends Controller
     public function create(): View
     {
         $documentos = Documento::all();
-        return view('cliente.create', compact('documentos'));
+        $optionsTipoPersona = TipoPersonaEnum::cases();
+        return view('cliente.create', compact('documentos', 'optionsTipoPersona'));
     }
 
     /**
@@ -48,9 +50,7 @@ class clienteController extends Controller
         try {
             DB::beginTransaction();
             $persona = Persona::create($request->validated());
-            $persona->cliente()->create([
-                'persona_id' => $persona->id
-            ]);
+            $persona->cliente()->create([]);
             DB::commit();
         } catch (Exception $e) {
             DB::rollBack();
@@ -83,14 +83,11 @@ class clienteController extends Controller
     public function update(UpdateClienteRequest $request, Cliente $cliente): RedirectResponse
     {
         try {
-            DB::beginTransaction();
 
-            Persona::where('id', $cliente->persona->id)
-                ->update($request->validated());
-
-            DB::commit();
+            $cliente->persona->update($request->validated());
+            
         } catch (Exception $e) {
-            DB::rollBack();
+            return redirect()->route('clientes.index')->with('error', 'Error al editar el cliente: ' . $e->getMessage());
         }
 
         return redirect()->route('clientes.index')->with('success', 'Cliente editado');
