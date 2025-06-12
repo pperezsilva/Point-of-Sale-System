@@ -21,9 +21,15 @@ class StoreCaracteristicaRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'nombre' => 'required|max:60|unique:caracteristicas,nombre',
-            'descripcion' => 'nullable|max:255'
-        ];
+        $rules = [
+        'nombre' => 'required|max:255|unique:caracteristicas,nombre',
+        'descripcion' => 'nullable|max:255',
+    ];
+
+    if ($this->has('sigla')) {
+        $rules['sigla'] = 'required|max:5';
+    }
+
+    return $rules;
     }
 }

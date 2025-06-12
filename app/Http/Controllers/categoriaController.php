@@ -10,6 +10,9 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Services\ActivityLogService;
+use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class categoriaController extends Controller
 {
@@ -48,15 +51,18 @@ class categoriaController extends Controller
         try {
             DB::beginTransaction();
             $caracteristica = Caracteristica::create($request->validated());
-            $caracteristica->categoria()->create([
-                'caracteristica_id' => $caracteristica->id
-            ]);
+            $caracteristica->categoria()->create([]);
             DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
-        }
+            ActivityLogService::log('Creacion de categoria', 'Categorias', $request->validated());
 
-        return redirect()->route('categorias.index')->with('success', 'Categoría registrada');
+            return redirect()->route('categorias.index')->with('success', 'Categoría registrada');
+
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            Log::error("Error al crear la categoría", ['error' => $e->getMessage()]);
+            return redirect()->route('categorias.index')->with('error', 'Error al registrar la categoría');
+        }
     }
 
     /**
@@ -80,10 +86,19 @@ class categoriaController extends Controller
      */
     public function update(UpdateCategoriaRequest $request, Categoria $categoria): RedirectResponse
     {
-        Caracteristica::where('id', $categoria->caracteristica->id)
-            ->update($request->validated());
+        try {
+            $categoria->caracteristica->update($request->validated());
+            $categoria->update($request->validated());
 
-        return redirect()->route('categorias.index')->with('success', 'Categoría editada');
+            ActivityLogService::log('Edición de categoría', 'Categorías', $request->validated());
+
+            return redirect()->route('categorias.index')->with('success', 'Categoría editada');
+
+        } catch (Exception $e) {
+            Log::error("Error al editar la categoría", ['error' => $e->getMessage()]);
+
+            return redirect()->route('categorias.index')->with('error', 'Error al editar la categoría');
+        }
     }
 
     /**
@@ -91,22 +106,23 @@ class categoriaController extends Controller
      */
     public function destroy(string $id): RedirectResponse
     {
-        $message = '';
-        $categoria = Categoria::find($id);
-        if ($categoria->caracteristica->estado == 1) {
-            Caracteristica::where('id', $categoria->caracteristica->id)
-                ->update([
-                    'estado' => 0
-                ]);
-            $message = 'Categoría eliminada';
-        } else {
-            Caracteristica::where('id', $categoria->caracteristica->id)
-                ->update([
-                    'estado' => 1
-                ]);
-            $message = 'Categoría restaurada';
-        }
+        try{
+            $categoria = Categoria::find($id);
 
-        return redirect()->route('categorias.index')->with('success', $message);
+            $nuevoEstado = $categoria->caracteristica->estado == 1 ? 0 : 1;
+            $categoria->caracteristica->update(['estado' => $nuevoEstado]);
+            $message = $nuevoEstado == 1 ? 'Categoría restaurada' : 'Categoría eliminada';
+
+            ActivityLogService::log($message, 'Categorías', [
+                'categoria_id' => $id,
+                'estado' => $nuevoEstado
+            ]);
+
+            return redirect()->route('categorias.index')->with('success', $message);
+
+        }catch (Throwable $e) {
+            Log::error("Error al eliminar la categoría", ['error' => $e->getMessage()]);
+            return redirect()->route('categorias.index')->with('error', 'Error al eliminar la categoría');
+        }
     }
 }

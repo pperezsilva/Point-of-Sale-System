@@ -10,6 +10,9 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Services\ActivityLogService;
+use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class marcaController extends Controller
 {
@@ -45,15 +48,18 @@ class marcaController extends Controller
         try {
             DB::beginTransaction();
             $caracteristica = Caracteristica::create($request->validated());
-            $caracteristica->marca()->create([
-                'caracteristica_id' => $caracteristica->id
-            ]);
+            $caracteristica->marca()->create([]);
             DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
-        }
+            ActivityLogService::log('Creacion de marca', 'Marcas', $request->validated());
 
-        return redirect()->route('marcas.index')->with('success', 'Marca registrada');
+            return redirect()->route('marcas.index')->with('success', 'Marca registrada');
+
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            Log::error("Error al crear la marca", ['error' => $e->getMessage()]);
+            return redirect()->route('marcas.index')->with('error', 'Error al registrar la marca');
+        }
     }
 
     /**
@@ -77,10 +83,19 @@ class marcaController extends Controller
      */
     public function update(UpdateMarcaRequest $request, Marca $marca): RedirectResponse
     {
-        Caracteristica::where('id', $marca->caracteristica->id)
-            ->update($request->validated());
+        try {
+            $marca->caracteristica->update($request->validated());
+            $marca->update($request->validated());
 
-        return redirect()->route('marcas.index')->with('success', 'Marca editada');
+            ActivityLogService::log('Edición de marca', 'Marcas', $request->validated());
+
+            return redirect()->route('marcas.index')->with('success', 'Marca editada');
+
+        } catch (Exception $e) {
+            Log::error("Error al editar la marca", ['error' => $e->getMessage()]);
+
+            return redirect()->route('marcas.index')->with('error', 'Error al editar la marca');
+        }
     }
 
     /**
@@ -88,22 +103,23 @@ class marcaController extends Controller
      */
     public function destroy(string $id): RedirectResponse
     {
-        $message = '';
-        $marca = Marca::find($id);
-        if ($marca->caracteristica->estado == 1) {
-            Caracteristica::where('id', $marca->caracteristica->id)
-                ->update([
-                    'estado' => 0
-                ]);
-            $message = 'Marca eliminada';
-        } else {
-            Caracteristica::where('id', $marca->caracteristica->id)
-                ->update([
-                    'estado' => 1
-                ]);
-            $message = 'Marca restaurada';
-        }
+        try{
+            $marca = Marca::find($id);
 
-        return redirect()->route('marcas.index')->with('success', $message);
+            $nuevoEstado = $marca->caracteristica->estado == 1 ? 0 : 1;
+            $marca->caracteristica->update(['estado' => $nuevoEstado]);
+            $message = $nuevoEstado == 1 ? 'Marca restaurada' : 'Marca eliminada';
+
+            ActivityLogService::log($message, 'Marcas', [
+                'marca_id' => $id,
+                'estado' => $nuevoEstado
+            ]);
+
+            return redirect()->route('marcas.index')->with('success', $message);
+
+        }catch (Throwable $e) {
+            Log::error("Error al eliminar la marca", ['error' => $e->getMessage()]);
+            return redirect()->route('marcas.index')->with('error', 'Error al eliminar la marca');
+        }
     }
 }
