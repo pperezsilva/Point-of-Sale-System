@@ -55,14 +55,29 @@ class Producto extends Model
         return $this->hasMany(Kardex::class);
     }
 
-    //Guarda imagen en el Storage
-     public function handleUploadImage($image): string
+    protected static function booted()
     {
-        $file = $image;
-        $name = time() . $file->getClientOriginalName();
-        //$file->move(public_path() . '/img/productos/', $name);
-        Storage::putFileAs('/public/productos/',$file,$name,'public');
-
-        return $name;
+        static::creating(function($producto){
+            if(empty($producto->codigo)){
+                $producto->codigo = self::generateUniqueCode();
+            }
+        });
     }
+
+    private static function generateUniqueCode(): string
+    {
+        do {
+            $code = str_pad(random_int(0, 9999999999), 10, '0', STR_PAD_LEFT);
+        } while (self::where('codigo', $code)->exists());
+
+        return $code;
+    }
+    
+    public function getNombreCompletoAttribute(): string
+    {
+        return "Codigo: {$this->codigo} - {$this->nombre} - Presentacion: {$this->presentacione->sigla}";
+    }
+    
+
+    
 }

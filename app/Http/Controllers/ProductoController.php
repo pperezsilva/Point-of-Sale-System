@@ -4,20 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductoRequest;
 use App\Http\Requests\UpdateProductoRequest;
+use App\Models\ActivityLog;
+use App\Services\ActivityLogService;
 use App\Models\Categoria;
 use App\Models\Marca;
 use App\Models\Presentacione;
 use App\Models\Producto;
+use App\Services\ProductoService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class ProductoController extends Controller
 {
-    function __construct()
+    protected $productoService;
+    function __construct(ProductoService $productoService)
     {
+        $this->productoService = $productoService;
         $this->middleware('permission:ver-producto|crear-producto|editar-producto|eliminar-producto', ['only' => ['index']]);
         $this->middleware('permission:crear-producto', ['only' => ['create', 'store']]);
         $this->middleware('permission:editar-producto', ['only' => ['edit', 'update']]);
@@ -28,7 +35,7 @@ class ProductoController extends Controller
      */
     public function index(): View
     {
-        $productos = Producto::with(['categorias.caracteristica','marca.caracteristica','presentacione.caracteristica'])->latest()->get();
+        $productos = Producto::with(['categoria.caracteristica','marca.caracteristica','presentacione.caracteristica'])->latest()->get();
     
         return view('producto.index',compact('productos'));
     }
@@ -63,38 +70,15 @@ class ProductoController extends Controller
     {
         //dd($request);
         try {
-            DB::beginTransaction();
-            //Tabla producto
-            $producto = new Producto();
-            if ($request->hasFile('img_path')) {
-                $name = $producto->handleUploadImage($request->file('img_path'));
-            } else {
-                $name = null;
-            }
+            $this->productoService->crearProducto($request->validated());   
 
-            $producto->fill([
-                'codigo' => $request->codigo,
-                'nombre' => $request->nombre,
-                'descripcion' => $request->descripcion,
-                'fecha_vencimiento' => $request->fecha_vencimiento,
-                'img_path' => $name,
-                'marca_id' => $request->marca_id,
-                'presentacione_id' => $request->presentacione_id
-            ]);
+            ActivityLogService::log('Registro de producto', 'Productos', $request->validated());
+            return redirect()->route('productos.index')->with('success', 'Producto registrado');
 
-            $producto->save();
-
-            //Tabla categoría producto
-            $categorias = $request->get('categorias');
-            $producto->categorias()->attach($categorias);
-
-
-            DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
+        } catch (Throwable $e) {
+            Log::error('Error al crear un producto', ['error' => $e->getMessage()]);
+            return redirect()->route('productos.index')->with('error', 'Error al registrar el producto');
         }
-
-        return redirect()->route('productos.index')->with('success', 'Producto registrado');
     }
 
     /**
@@ -134,49 +118,21 @@ class ProductoController extends Controller
     public function update(UpdateProductoRequest $request, Producto $producto): RedirectResponse
     {
         try{
-            DB::beginTransaction();
+           $this->productoService->editarProducto($request->validated(), $producto);
 
-            if ($request->hasFile('img_path')) {
-                $name = $producto->handleUploadImage($request->file('img_path'));
-
-                //Eliminar si existiese una imagen
-                if(Storage::disk('public')->exists('productos/'.$producto->img_path)){
-                    Storage::disk('public')->delete('productos/'.$producto->img_path);
-                }
-
-            } else {
-                $name = $producto->img_path;
-            }
-
-            $producto->fill([
-                'codigo' => $request->codigo,
-                'nombre' => $request->nombre,
-                'descripcion' => $request->descripcion,
-                'fecha_vencimiento' => $request->fecha_vencimiento,
-                'img_path' => $name,
-                'marca_id' => $request->marca_id,
-                'presentacione_id' => $request->presentacione_id
-            ]);
-
-            $producto->save();
-
-            //Tabla categoría producto
-            $categorias = $request->get('categorias');
-            $producto->categorias()->sync($categorias);
-
-            DB::commit();
+           ActivityLogService::log('Edición de producto', 'Productos', $request->validated());
+           return redirect()->route('productos.index')->with('success', 'Producto editado');
         }catch(Exception $e){
-            DB::rollBack();
+            Log::error('Error al editar un producto', ['error' => $e->getMessage()]);
+            return redirect()->route('productos.index')->with('error', 'Error al editar el producto');
         }
-
-        return redirect()->route('productos.index')->with('success','Producto editado');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id): RedirectResponse
-    {
+    public function destroy(string $id)
+    {/*
         $message = '';
         $producto = Producto::find($id);
         if ($producto->estado == 1) {
@@ -193,6 +149,6 @@ class ProductoController extends Controller
             $message = 'Producto restaurado';
         }
 
-        return redirect()->route('productos.index')->with('success', $message);
+        return redirect()->route('productos.index')->with('success', $message); */
     }
 }
