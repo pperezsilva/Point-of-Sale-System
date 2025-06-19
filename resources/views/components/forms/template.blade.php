@@ -10,6 +10,14 @@
         @if($patch)
             @method('PATCH')
         @endif
+
+        @csrf
+
+        @if (isset( $header ))
+        <div class="card-header">
+            {{ $header }}
+        </div>
+        @endif
         
         @csrf
         <div class="card-body">

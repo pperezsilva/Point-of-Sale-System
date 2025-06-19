@@ -58,6 +58,9 @@
                 <x-nav.nav-link content='Productos' icon="fa-brands fa-shopify" :href="route('productos.index')"/>
                 @endcan
 
+                <!----Inventario---->
+                <x-nav.nav-link content='Inventario' icon="fa-solid fa-box" :href="route('inventario.index')"/>
+
                 <!----Clientes---->
                 @can('ver-cliente')
                 <x-nav.nav-link content='Clientes' icon="fa-solid fa-users" :href="route('clientes.index')"/>
