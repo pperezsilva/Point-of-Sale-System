@@ -13,6 +13,9 @@ use Throwable;
 use App\Models\Inventario;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
+use App\Models\Kardex;
+use App\Enums\TipoTransaccionEnum;
+use Illuminate\Support\Facades\DB;
 
 class InventarioController extends Controller
 {
@@ -45,14 +48,17 @@ class InventarioController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreInventarioRequest $request): RedirectResponse
+    public function store(StoreInventarioRequest $request, Kardex $kardex): RedirectResponse
     {
+        DB::beginTransaction();
         try{
             Inventario::create($request->validated());
-
+            $kardex->crearRegistro($request->validated(), TipoTransaccionEnum::Apertura);
+            DB::commit();
             ActivityLogService::log('Inicializacion de producto', 'Productos', $request->validated());
             return redirect()->route('productos.index')->with('success', 'Producto Inicializado');
         }catch(Throwable $e) {
+            DB::rollBack();
             Log::error('Error al inicializar el producto', ['error' => $e->getMessage()]);
             return redirect()->route('productos.index')->with('error', 'Error al inicializar el producto');
         }

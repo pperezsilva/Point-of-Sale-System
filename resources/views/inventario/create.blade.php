@@ -40,7 +40,7 @@
             <input type="hidden" name="producto_id" value="{{$producto->id}}">
 
             <!-- Ubicaciones -->
-            <div class="col-12">
+            <div class="col-6">
                 <label for="ubicacione_id" class = "form-label">Seleccione una ubicacion:</label>
                 <select name="ubicacione_id"
                         id="ubicaciones_id" 
@@ -64,6 +64,11 @@
             <!---Fecha de vencimiento---->
             <div class="col-md-6">
                 <x-forms.input id="fecha_vencimiento" type="date" labelText="Fecha de Vencimiento"/>
+            </div>
+
+            <!---Costo Unitario---->
+            <div class="col-md-6">
+                <x-forms.input id="costo_unitario" type="number" labelText="Costo Unitario" required="true"/>
             </div>
 
         </div>

@@ -61,6 +61,9 @@
                 <!----Inventario---->
                 <x-nav.nav-link content='Inventario' icon="fa-solid fa-box" :href="route('inventario.index')"/>
 
+                <!----Kardex---->
+                <x-nav.nav-link content='Kardex' icon="fa-solid fa-file" :href="route('kardex.index')"/>
+
                 <!----Clientes---->
                 @can('ver-cliente')
                 <x-nav.nav-link content='Clientes' icon="fa-solid fa-users" :href="route('clientes.index')"/>

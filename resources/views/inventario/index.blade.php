@@ -41,6 +41,7 @@
                         <th>Producto</th>
                         <th>Stock</th>
                         <th>Ubicacion</th>
+                        <th>Fecha de Vencimiento</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -57,7 +58,10 @@
                             {{$item->ubicacione->nombre}}
                         </td>
                         <td>
-                        
+                            {{$item->fecha_vencimiento ?? $item->producto->fecha_vencimiento}}
+                        </td>
+                        <td>
+
                         </td>
                         
                     </tr>
