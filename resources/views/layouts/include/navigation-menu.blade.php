@@ -76,6 +76,12 @@
 
                 <x-nav.heading>Otros</x-nav.heading>
 
+                <!----Empresa---->
+                <x-nav.nav-link content='Empresa' icon="fa-solid fa-building" :href="route('empresa.index')"/>
+
+                <!----Empleados---->
+                <x-nav.nav-link content='Empleados' icon="fa-solid fa-user-tie" :href="route('empleados.index')"/>
+
                 <!----Usuarios---->
                 @can('ver-user')
                 <x-nav.nav-link content='Usuarios' icon="fa-solid fa-user" :href="route('users.index')"/>

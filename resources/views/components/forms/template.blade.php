@@ -1,31 +1,31 @@
 @props([
-    'action',
-    'method',
-    'patch' => false
+'action',
+'method',
+'patch' => false,
+'file' => false
 ])
-
 <div class="card text-bg-light">
-    <form action="{{ $action }}" method="{{ $method }}">
+    <form action="{{ $action }}" method="{{ $method }}" @if($file) enctype="multipart/form-data" @endif>
 
-        @if($patch)
-            @method('PATCH')
+        @if ($patch)
+        @method('PATCH')
         @endif
 
         @csrf
 
-        @if (isset( $header ))
+        @if (isset($header))
         <div class="card-header">
-            {{ $header }}
+            {{$header}}
         </div>
         @endif
-        
-        @csrf
+
         <div class="card-body">
-            {{ $slot }}
+            {{$slot}}
         </div>
 
         <div class="card-footer text-center">
-            {{ $footer }}
+            {{$footer}}
         </div>
+
     </form>
 </div>

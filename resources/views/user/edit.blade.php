@@ -101,11 +101,11 @@
                     <div class="col-lg-4">
                         <select name="role" id="role" class="form-select">
                             @foreach ($roles as $item)
-                            @if ( in_array($item->name,$user->roles->pluck('name')->toArray()) )
-                            <option selected value="{{$item->name}}" @selected(old('role')==$item->name)>{{$item->name}}</option>
-                            @else
-                            <option value="{{$item->name}}" @selected(old('role')==$item->name)>{{$item->name}}</option>
-                            @endif
+                                <option
+                                    value="{{$item->name}}"
+                                    @selected(in_array($item->name, $user->roles->pluck('name')->toArray()) || old('role') == $item->name)>
+                                    {{$item->name}}
+                                </option>
                             @endforeach
                         </select>
                     </div>

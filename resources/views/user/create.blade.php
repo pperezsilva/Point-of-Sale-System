@@ -23,9 +23,38 @@
             </div>
             <div class="card-body">
 
+                <!---- Empleado ----->
+                <div class="row mb-4">
+                   <label for="empleado_id" class="col-lg-2 col-form-label">
+                       Empleado:</label>
+                   <div class="col-lg-4">
+                       <select name="empleado_id" id="empleado_id" 
+                            class="form-select"> 
+                            <option value="" selected disabled>Seleccione:</option>
+                            @foreach ($empleados as $item)
+                            <option value="{{$item->id}}"
+                                {{ old('empleado_id') == $item->id ? 'selected' : '' }}>
+                                {{$item->razon_social}}
+                            </option>
+                            @endforeach
+                       </select>
+                   </div>
+                   <div class="col-lg-4">
+                       <div class="form-text" id="nameHelpBlock">
+                           Escoja un empleado.
+                       </div>
+                   </div>
+                   <div class="col-lg-2">
+                       @error('empleado_id')
+                       <small class="text-danger">{{'*'.$message}}</small>
+                       @enderror
+                   </div>
+                   
+                </div>
+
                 <!---Nombre---->
                 <div class="row mb-4">
-                    <label for="name" class="col-lg-2 col-form-label">Nombres:</label>
+                    <label for="name" class="col-lg-2 col-form-label">Nombre:</label>
                     <div class="col-lg-4">
                         <input autocomplete="off" type="text" name="name" id="name" class="form-control" value="{{old('name')}}" aria-labelledby="nameHelpBlock">
                     </div>
